@@ -1,0 +1,96 @@
+name: Build & Deploy Dashboard to EC2
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1) Check out the repository so that the workflow runner can access the code
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2) Log in to Docker Hub using GitHub Secrets
+      #    This allows the workflow to push images to your Docker Hub repository.
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # 3) Build the Docker image from the dashboard directory and push it to Docker Hub.
+      #    The context is ./dashboard because your Dockerfile is inside the dashboard folder.
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./dashboard
+          push: true
+          tags: <DOCKERHUB_USERNAME>/unusual-suspects-dashboard:latest
+
+      # 4) Connect to the EC2 instance over SSH.
+      #    Prepare the application directory and either clone the repo or pull updates.
+      - name: Prepare app directory on EC2
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_IP }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # Create /home/ec2-user/app if it does not exist
+            if [ ! -d "/home/ec2-user/app" ]; then
+              mkdir -p /home/ec2-user/app
+              chown ec2-user:ec2-user /home/ec2-user/app
+            fi
+
+            # Install git if it is not installed already
+            if ! command -v git &> /dev/null; then
+              sudo yum install -y git || sudo apt-get install -y git
+            fi
+
+            cd /home/ec2-user/app
+
+            # If the repo already exists, pull the latest version.
+            # Otherwise, clone it for the first time.
+            if [ -d ".git" ]; then
+              git fetch --all
+              git reset --hard origin/main
+            else
+              git clone https://github.com/shellyycao/IDS706_DE_Final_Project.git .
+            fi
+
+      # 5) SSH into EC2 again and run Docker Compose to deploy the updated dashboard.
+      - name: Run dashboard with Docker Compose on EC2
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_IP }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /home/ec2-user/app/dashboard
+
+            # Detect whether the system uses "docker compose" (newer versions)
+            # or "docker-compose" (legacy standalone version)
+            if docker compose version > /dev/null 2>&1; then
+              DOCKER_COMPOSE="docker compose"
+            else
+              # Install docker-compose manually if it is missing
+              if ! command -v docker-compose &> /dev/null; then
+                sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+                sudo chmod +x /usr/local/bin/docker-compose
+              fi
+              DOCKER_COMPOSE="docker-compose"
+            fi
+
+            # Pull the latest Docker image from Docker Hub
+            $DOCKER_COMPOSE pull
+
+            # Stop any previous containers
+            $DOCKER_COMPOSE down
+
+            # Start the updated dashboard in detached mode (-d)
+            $DOCKER_COMPOSE up -d
