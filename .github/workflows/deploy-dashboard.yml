@@ -30,7 +30,7 @@ jobs:
         with:
           context: ./dashboard
           push: true
-          tags: <DOCKERHUB_USERNAME>/unusual-suspects-dashboard:latest
+          tags: farnooshmemari/unusual-suspects-dashboard:latest
 
       # 4) Connect to the EC2 instance over SSH.
       #    Prepare the application directory and either clone the repo or pull updates.
@@ -60,7 +60,7 @@ jobs:
               git fetch --all
               git reset --hard origin/main
             else
-              git clone https://github.com/shellyycao/IDS706_DE_Final_Project.git .
+              git clone https://github.com/FarnooshMemari/IDS706_DE_Final_Project.git .
             fi
 
       # 5) SSH into EC2 again and run Docker Compose to deploy the updated dashboard.
