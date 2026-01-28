@@ -1,8 +1,8 @@
-# Unusual Suspects - Crypto Market Fraud Detection Model
-
+# Ethereum Transaction Anomaly Detection Pipeline
+  Unsupervised ML-based fraud detection on Ethereum transactions using AWS batch pipelines
 ## Description
 
- Unusual Suspects is a machine learning–driven fraud detection system designed to identify anomalous and suspicious patterns in Ethereum transaction data. The system runs on a daily batch schedule to extract, process, and analyze blockchain transactions using both labeled and unlabeled datasets. It delivers actionable insights to risk management teams through an interactive fraud monitoring dashboard, aiming to achieve high precision while maintaining low false-positive rates.
+ Unusual Suspects is a machine learning–driven fraud detection system designed to identify anomalous and suspicious patterns in Ethereum crypto transaction data. The system runs on a daily batch schedule to extract, process, and analyze blockchain transactions using both labeled and unlabeled datasets. It delivers actionable insights to risk management teams through an interactive fraud monitoring dashboard, aiming to achieve high precision while maintaining low false-positive rates.
 
 ## Data Sources
 Model development dataset: 
@@ -112,5 +112,6 @@ The model is trained on the feature matrix, then generates predictions where nor
 - Frontend Developer (Shelly Cao) – Streamlit dashboard development, data visualization, user interface design, and real-time alert display systems.
   
 - DevOps Engineer (Sebine Scaria) – README documentation, Docker and Devcontainer containerization, CI/CD pipeline setup, and system monitoring.
+
 
 
